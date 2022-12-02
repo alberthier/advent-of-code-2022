@@ -3,17 +3,12 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+
 pub enum GameMode {
     Simple,
     ExpectedResult
 }
 
-#[derive(PartialEq, Eq)]
-pub enum Move {
-    Rock,
-    Paper,
-    Scissors,
-}
 
 pub enum RoundResult {
     Defeat,
@@ -45,6 +40,14 @@ impl RoundResult {
             Self::Victory => 6
         }
     }
+}
+
+
+#[derive(PartialEq, Eq)]
+pub enum Move {
+    Rock,
+    Paper,
+    Scissors,
 }
 
 impl Move {
@@ -128,6 +131,7 @@ impl PartialOrd for Move {
     }
 }
 
+
 pub struct Round {
     opponent_move: Move,
     my_move: Move,
@@ -188,6 +192,7 @@ impl Game {
     }
 }
 
+
 fn play_game(path: &str, game_mode: &GameMode) -> Result<(), &'static str> {
     let Ok(lines) = read_lines(path) else {
         return Err("Unable to read the file")
@@ -203,6 +208,7 @@ fn play_game(path: &str, game_mode: &GameMode) -> Result<(), &'static str> {
 
     Ok(())
 }
+
 
 fn main() -> Result<(), &'static str> {
     let stage = std::env::args().nth(1).expect("Expecting puzzle stage");
