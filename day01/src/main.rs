@@ -48,23 +48,26 @@ impl ElfGroup<> {
                 }
             }
         }
+
+        self.elves.sort_by(|x, y|
+            x.total_calories().cmp(&y.total_calories())
+        )
     }
 
     pub fn elves_count(&self) -> usize {
         self.elves.len()
     }
 
-    pub fn get_max_calories(&self) -> Option<u32> {
-        let Some(elf) = self.elves.iter().max_by(|x, y|
-            x.total_calories().cmp(&y.total_calories())
-        ) else {
-            return None;
-        };
-        Some(elf.total_calories())
+    pub fn get_nth_max_calories(&self, count: usize) -> Option<u32> {
+        let Some(last_chunk) = self.elves.chunks(count).last() else { return None };
+        let total = last_chunk.iter()
+            .map(|elf| elf.total_calories())
+            .sum();
+        Some(total)
     }
 }
 
-fn stage1(path: &str) -> Result<(), &'static str> {
+fn elves_calories(path: &str, count: usize) -> Result<(), &'static str> {
     let Ok(lines) = read_lines(path) else {
         return Err("Unable to read the file")
     };
@@ -72,11 +75,12 @@ fn stage1(path: &str) -> Result<(), &'static str> {
     let mut elf_group = ElfGroup::new();
     elf_group.load(lines);
 
-    let Some(max_calories) = elf_group.get_max_calories() else {
+    let Some(max_calories) = elf_group.get_nth_max_calories(count) else {
         return Err("No elves in the list");
     };
     println!("The input has {} elves", elf_group.elves_count());
-    println!("The elf with the carrying the most calories has {} calories", max_calories);
+    let who = if count == 1 { String::from("elf") } else { format!("{count} elves") };
+    println!("The {who} carrying the most calories has {max_calories} calories");
 
     Ok(())
 }
@@ -86,7 +90,8 @@ fn main() -> Result<(), &'static str> {
     let path = std::env::args().nth(2).expect("Expecting a file name");
 
     match stage.as_str() {
-        "stage1" => stage1(path.as_str()),
+        "stage1" => elves_calories(path.as_str(), 1),
+        "stage2" => elves_calories(path.as_str(), 3),
         _ => Err("Unknown stage")
     }
 }
