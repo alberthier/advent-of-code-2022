@@ -107,8 +107,8 @@ impl ElvesColony {
             rucksacks.push(rucksack)
         }
 
-        for group_rucksacks in rucksacks.chunks(group_size).into_iter() {
-            let elf_group = ElfGroup::new(group_rucksacks.to_owned().to_vec());
+        for group_rucksacks in rucksacks.chunks(group_size) {
+            let elf_group = ElfGroup::new(group_rucksacks.to_vec());
             instance.elf_groups.push(elf_group);
         }
         println!("count {}", instance.elf_groups.len());
