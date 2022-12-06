@@ -100,49 +100,64 @@ impl Move {
     }
 }
 
-enum CraneType {
-    CrateMover9000,
-    CrateMover9001,
-}
 
-struct Crane {
+struct CraneMoves {
     moves: Vec<Move>,
-    type_: CraneType,
 }
 
-impl Crane {
+impl CraneMoves {
 
-    pub fn from(lines: impl Iterator<Item = String>, type_: CraneType) -> Option<Crane> {
+    pub fn from(lines: impl Iterator<Item = String>) -> Option<CraneMoves> {
         let mut moves = Vec::<Move>::new();
         for line in lines {
             let move_ = Move::from(line)?;
             moves.push(move_);
         }
-        Some(Crane { moves, type_ })
+        Some(CraneMoves { moves })
     }
+}
 
-    pub fn execute(&self, crates_stock: &mut CratesStock) {
-        match self.type_ {
-            CraneType::CrateMover9000 => {
-                self.execute_9000(crates_stock);
-            }
-            CraneType::CrateMover9001 => {
-                self.execute_9001(crates_stock);
-            }
-        }
+trait Crane {
+    fn execute(&self, moves: &CraneMoves, crates_stock: &mut CratesStock);
+}
+
+struct CrateMover9000 {
+}
+
+impl CrateMover9000 {
+
+    pub fn new() -> CrateMover9000 {
+        CrateMover9000 {}
     }
+}
 
-    fn execute_9000(&self, crates_stock: &mut CratesStock) {
-        for move_ in self.moves.iter() {
+impl Crane for CrateMover9000 {
+
+    fn execute(&self, crane_moves: &CraneMoves, crates_stock: &mut CratesStock) {
+        for move_ in crane_moves.moves.iter() {
             for _ in 0..move_.count {
                 let crate_ = crates_stock.stock[move_.from].pop().expect("Invalid move");
                 crates_stock.stock[move_.to].push(crate_);
             }
         }
     }
+}
 
-    fn execute_9001(&self, crates_stock: &mut CratesStock) {
-        for move_ in self.moves.iter() {
+
+struct CrateMover9001 {
+}
+
+impl CrateMover9001 {
+
+    pub fn new() -> CrateMover9001 {
+        CrateMover9001 {}
+    }
+}
+
+impl Crane for CrateMover9001 {
+
+    fn execute(&self, crane_moves: &CraneMoves, crates_stock: &mut CratesStock) {
+        for move_ in crane_moves.moves.iter() {
             let dest_index = crates_stock.stock[move_.to].len();
             for _ in 0..move_.count {
                 let crate_ = crates_stock.stock[move_.from].pop().expect("Invalid move");
@@ -152,7 +167,7 @@ impl Crane {
     }
 }
 
-fn execute(path: &str, type_: CraneType) -> Result<(), &'static str> {
+fn execute(path: &str, crane: &dyn Crane) -> Result<(), &'static str> {
     let Ok(mut lines) = read_lines(path) else {
         return Err("Unable to read the file")
     };
@@ -167,8 +182,9 @@ fn execute(path: &str, type_: CraneType) -> Result<(), &'static str> {
     let Some(mut crates_stock) = CratesStock::from(&schema_buffer) else {
         return Err("Unable to create crates stock");
     };
-    let crane = Crane::from(lines, type_).ok_or("Unable to parse crane instructions")?;
-    crane.execute(&mut crates_stock);
+    let crane_moves = CraneMoves::from(lines).ok_or("Unable to parse crane instructions")?;
+
+    crane.execute(&crane_moves, &mut crates_stock);
     let result = crates_stock.top_of_stacks();
     println!("Top of stacks: {}", result);
 
@@ -180,8 +196,8 @@ fn main() -> Result<(), &'static str> {
     let path = std::env::args().nth(2).expect("Expecting a file name");
 
     match stage.as_str() {
-        "stage1" => execute(path.as_str(), CraneType::CrateMover9000),
-        "stage2" => execute(path.as_str(), CraneType::CrateMover9001),
+        "stage1" => execute(path.as_str(), &CrateMover9000::new()),
+        "stage2" => execute(path.as_str(), &CrateMover9001::new()),
         _ => Err("Unknown stage")
     }
 }
